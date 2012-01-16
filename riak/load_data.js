@@ -9,18 +9,19 @@
  */
 
 // Imports
-var riak = require('riak-js').getClient({ 
-        host: process.env['RIAK_HOST'], 
-        port: process.env['RIAK_PORT'] 
-    }),
+var riak = require('riak-js'),
     _ = require('underscore'),
     csv = require('csv'),
     fs = require('fs'),
     // seq = require('seq'),
-    num_cpus = require('os').cpus().length;
+    num_cpus = require('os').cpus().length,
+
+    settings = require('./settings').SETTINGS;
 
 if (process.argv.length < 3)
     console.log('\033[0;31m' + process.argv[1] + ' requires a file argument\033[0m'), process.exit(1);
+
+var db = riak.getClient({ host: settings.RIAK_HOST, port: settings.RIAK_PORT })
 
 // Helper vars and functions
 var total = 0 /* counter for total rows loaded */,
@@ -48,6 +49,8 @@ console.log('\033[0;33mLoading data into "' + bucket + '" bucket...\n\033[0m');
 // If using relative path, prepend working dir 
 if ( !(/^\//).test(file) )
     file = __dirname + '/' + file;
+
+db.updateProps(settings.RIAK_BUCKET_PROPS);
 
 var stream = fs
     .createReadStream(file, { 
@@ -89,7 +92,7 @@ function process_line(line) {
         for (var i = 0; i < line.length; i++)
             json_data[headers[i]] = line[i];
 
-        riak.save(bucket, line[0], json_data, { returnbody: false }, function(error) {
+        db.save(bucket, line[0], json_data, {}, function(error) {
             if (error != null)
                 console.log(error);
 
