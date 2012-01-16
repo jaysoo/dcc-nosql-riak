@@ -92,7 +92,7 @@ function process_line(line) {
         for (var i = 0; i < line.length; i++)
             json_data[headers[i]] = line[i];
 
-        db.save(bucket, line[0], json_data, {}, function(error) {
+        db.save(bucket, line[0], json_data, { returnbody: false }, function(error) {
             if (error != null)
                 console.log(error);
 
