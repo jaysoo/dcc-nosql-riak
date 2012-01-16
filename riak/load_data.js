@@ -25,8 +25,6 @@ if (process.argv.length < 3)
 // Helper vars and functions
 var count = 0 /* counter for total rows loaded */,
 
-    total_lines_est = 100000,
-
     file = process.argv[2],
 
     // Use the file name (minus extension) as Riak bucket name
@@ -36,16 +34,21 @@ var count = 0 /* counter for total rows loaded */,
     headers = null,
 
     // For timing total run time
-    timer = { start: new Date().getTime(), end: null };
+    timer = { 
+        start: new Date().getTime(), 
+        end: null
+    },
+
+    remaining_chunk = '';
 
 console.log('\033[0;33mLoading data into "' + bucket + '" bucket...\n\033[0m');
 
-
-// Might be using relative path
+// If using relative path, prepend working dir 
 if ( !(/^\//).test(file) )
     file = __dirname + '/' + file;
 
-function clean(data) {
+// Convert \N to null
+function map_nulls(data) {
     return _.map(data, function(value) {
         return value == '\\N'
             ? null
@@ -53,51 +56,52 @@ function clean(data) {
     });
 }
 
-function begin() {
-    // Open TSV file and load all contents to Riak
-    csv()
-        .fromPath(file, {
-            delimiter: '\t'
-        })
+function process_line(line) {
+    line = map_nulls( line.split('\t') );
 
-        .on('data', function(data, index) {
+    if (!count++) {
+        headers = line;
+    } else {
+        var json_data = {};
 
-            data =  clean(data);
+        // populate keys and values
+        for (var i = 0; i < line.length; i++)
+            json_data[headers[i]] = line[i];
 
-            if (count++ == 0) {
-                headers = data;
-            } else {
-                var json_data = {};
-
-                // populate keys and values
-                for (var i = 0; i < data.length; i++)
-                    json_data[headers[i]] = data[i];
-
-                riak.save(bucket, data[0], json_data, {}, function(error) {
-                    if (error != null)
-                        console.log(error);
-                });
-            }
-        })
-
-        .on('end', function() {
-
-            console.log('\033[0;33m\n...Loaded ' + count + ' rows\033[0m');
-
-            timer.end = new Date().getTime();
-
-            console.log('\033[0;34m\nStats:');
-
-            var total_time = ( timer.end - timer.start ) / 1000;
-            
-            console.log(
-                '    Total time = ' + total_time.toFixed(2) + ' seconds\n' +
-                '    Inserts = ' + count + '\n' +
-                '    Operations per second = ' + ( count / total_time ).toFixed(2) + '\n\033[0m'
-            );
+        riak.save(bucket, line[0], json_data, { returnbody: false }, function(error) {
+            if (error != null)
+                console.log(error);
         });
+    }
 }
 
-begin();
+var stream = fs
+    .createReadStream(file, { 
+        bufferSize: 64 * 1024,
+        flags: 'r'
+    })
+    .addListener('data', function(chunk) {
+        var lines = ( remaining_chunk + chunk ).split('\n');
 
+        remaining_chunk = lines.pop();
 
+        for (var i = 0, line; line = lines[i]; i++)
+            process_line(line);
+    })
+    .addListener('close', function() {
+        remaining_chunk && process_line(remaining_chunk);
+
+        console.log('\033[0;33m\n...Loaded ' + count + ' rows\033[0m');
+
+        timer.end = new Date().getTime();
+
+        console.log('\033[0;34m\nStats:');
+
+        var total_time = ( timer.end - timer.start ) / 1000;
+        
+        console.log(
+            '    Total time = ' + total_time.toFixed(2) + ' seconds\n' +
+            '    Inserts = ' + count + '\n' +
+            '    Operations per second = ' + ( count / total_time ).toFixed(2) + '\n\033[0m'
+        );
+    });
