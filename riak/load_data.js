@@ -23,7 +23,9 @@ if (process.argv.length < 3)
     console.log('\033[0;31m' + process.argv[1] + ' requires a file argument\033[0m'), process.exit(1);
 
 // Helper vars and functions
-var count = 0 /* counter for total rows loaded */,
+var total = 0 /* counter for total rows loaded */,
+
+    processed = 0,
 
     file = process.argv[2],
 
@@ -47,34 +49,6 @@ console.log('\033[0;33mLoading data into "' + bucket + '" bucket...\n\033[0m');
 if ( !(/^\//).test(file) )
     file = __dirname + '/' + file;
 
-// Convert \N to null
-function map_nulls(data) {
-    return _.map(data, function(value) {
-        return value == '\\N'
-            ? null
-            : value;
-    });
-}
-
-function process_line(line) {
-    line = map_nulls( line.split('\t') );
-
-    if (!count++) {
-        headers = line;
-    } else {
-        var json_data = {};
-
-        // populate keys and values
-        for (var i = 0; i < line.length; i++)
-            json_data[headers[i]] = line[i];
-
-        riak.save(bucket, line[0], json_data, { returnbody: false }, function(error) {
-            if (error != null)
-                console.log(error);
-        });
-    }
-}
-
 var stream = fs
     .createReadStream(file, { 
         bufferSize: 64 * 1024,
@@ -90,18 +64,53 @@ var stream = fs
     })
     .addListener('close', function() {
         remaining_chunk && process_line(remaining_chunk);
-
-        console.log('\033[0;33m\n...Loaded ' + count + ' rows\033[0m');
-
-        timer.end = new Date().getTime();
-
-        console.log('\033[0;34m\nStats:');
-
-        var total_time = ( timer.end - timer.start ) / 1000;
-        
-        console.log(
-            '    Total time = ' + total_time.toFixed(2) + ' seconds\n' +
-            '    Inserts = ' + count + '\n' +
-            '    Operations per second = ' + ( count / total_time ).toFixed(2) + '\n\033[0m'
-        );
     });
+
+// Convert \N to null
+function map_nulls(data) {
+    return _.map(data, function(value) {
+        return value == '\\N'
+            ? null
+            : value;
+    });
+}
+
+function process_line(line) {
+    line = map_nulls( line.split('\t') );
+
+    if (!total++) {
+        headers = line;
+    } else {
+        var json_data = {};
+
+        processed++;
+
+        // populate keys and values
+        for (var i = 0; i < line.length; i++)
+            json_data[headers[i]] = line[i];
+
+        riak.save(bucket, line[0], json_data, { returnbody: false }, function(error) {
+            if (error != null)
+                console.log(error);
+
+            if (--processed === 0) 
+                print_stats();
+        });
+    }
+}
+
+function print_stats() {
+    console.log('\033[0;33m\n...Loaded ' + total + ' rows\033[0m');
+
+    timer.end = new Date().getTime();
+
+    console.log('\033[0;34m\nStats:');
+
+    var total_time = ( timer.end - timer.start ) / 1000;
+    
+    console.log(
+        '    Total time = ' + total_time.toFixed(2) + ' seconds\n' +
+        '    Inserts = ' + total + '\n' +
+        '    Operations per second = ' + ( total / total_time ).toFixed(2) + '\n\033[0m'
+    );
+}
