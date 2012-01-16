@@ -50,24 +50,27 @@ console.log('\033[0;33mLoading data into "' + bucket + '" bucket...\n\033[0m');
 if ( !(/^\//).test(file) )
     file = __dirname + '/' + file;
 
-db.updateProps(settings.RIAK_BUCKET_PROPS);
+db.updateProps(bucket, settings.RIAK_BUCKET_PROPS, function(error) {
+    if (error)
+        console.log(error), process.exit(1);
 
-var stream = fs
-    .createReadStream(file, { 
-        bufferSize: 64 * 1024,
-        flags: 'r'
-    })
-    .addListener('data', function(chunk) {
-        var lines = ( remaining_chunk + chunk ).split('\n');
+    var stream = fs
+        .createReadStream(file, { 
+            bufferSize: 64 * 1024,
+            flags: 'r'
+        })
+        .addListener('data', function(chunk) {
+            var lines = ( remaining_chunk + chunk ).split('\n');
 
-        remaining_chunk = lines.pop();
+            remaining_chunk = lines.pop();
 
-        for (var i = 0, line; line = lines[i]; i++)
-            process_line(line);
-    })
-    .addListener('close', function() {
-        remaining_chunk && process_line(remaining_chunk);
-    });
+            for (var i = 0, line; line = lines[i]; i++)
+                process_line(line);
+        })
+        .addListener('close', function() {
+            remaining_chunk && process_line(remaining_chunk);
+        });
+});
 
 // Convert \N to null
 function map_nulls(data) {
@@ -92,7 +95,7 @@ function process_line(line) {
         for (var i = 0; i < line.length; i++)
             json_data[headers[i]] = line[i];
 
-        db.save(bucket, line[0], json_data, { returnbody: false }, function(error) {
+        db.save(bucket, line[0], json_data, { w: 0, dw: 0, returnbody: false }, function(error) {
             if (error != null)
                 console.log(error);
 
