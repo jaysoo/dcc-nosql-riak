@@ -8,6 +8,13 @@ Requirements
 * [npm](http://npmjs.org/)
 * npm modules: riak-js, seq, undercore
 
+Installation
+------------
+
+Use the install_riak.sh script for setting up Riak + Node.js environment.
+
+    curl -L https://github.com/jaysoo/dcc-nosql-riak/raw/master/install_riak.sh | sudo sh
+
 Loading data
 ------------
 
