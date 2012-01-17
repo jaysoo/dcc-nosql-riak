@@ -30,7 +30,7 @@ def populate_bucket(filename, bucket_name=None):
 
         # Replace all \N values with None
         values = [ None if v == '\\N' else v for v in line.split('\t') ]
-        data = _generate_document_data(header, values) 
+        data = dict( zip(header, values) )
 
         _store_data(client, bucket, str(i), data)
 
@@ -46,17 +46,6 @@ def _generate_bucket_name(filename):
     '''
     return filename.split('/')[-1].split('.')[0]
 
-def _generate_document_data(header, values):
-    '''
-    Generates document hash data given a list of the header and values
-    '''
-    document = {}
-
-    for i,value in enumerate(values):
-        document[ header[i] ] = value
-
-    return document
-
 def _store_data(client, bucket, id, data):
     obj = riak.RiakObject(client, bucket, id)
     obj.set_data(data)
@@ -66,12 +55,6 @@ def _store_data(client, bucket, id, data):
     # Set indices
     for k,v in data.items():
         obj.add_index('%s_bin' % k, v)
-
-        try:
-            v_int = int(v)
-            obj.add_index('%s_int' % k, v_int)
-        except:
-            pass
 
     # Try to optimize for write speed
     obj.store(w=0, dw=0, return_body=False)
