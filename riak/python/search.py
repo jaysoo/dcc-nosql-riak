@@ -17,8 +17,6 @@ def query(bucket_name, field, value, end_value=None):
 
     end_time = time.time()
     elapsed_time  = end_time - start_time
-
-    print '\033[0;33mFound %s document(s)...\n\033[0m' % len(results)
     print '\033[0;33mDisplaying top 5 results...\n\033[0m'
 
     for i,link in enumerate( results[:5] ):
@@ -26,6 +24,7 @@ def query(bucket_name, field, value, end_value=None):
         pp.pprint( link.get().get_data() )
         print 
 
+    print '\033[0;34mFound %s document(s)...\033[0m' % len(results)
     print '\033[0;34mQuery time: %0.2f seconds\n\033[0m' % elapsed_time
 
 
