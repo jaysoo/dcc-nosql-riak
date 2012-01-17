@@ -28,7 +28,8 @@ def populate_bucket(filename, bucket_name=None):
             header = [ _slugify_strip_re.sub('', h.replace(' ', '_')).strip().lower() for h in line.split('\t') ]
             continue
 
-        values = line.split('\t')
+        # Replace all \N values with None
+        values = [ None if v == '\\N' else v for v in line.split('\t') ]
         data = _generate_document_data(header, values) 
 
         _store_data(client, bucket, str(i), data)
