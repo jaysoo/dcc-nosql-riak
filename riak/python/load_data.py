@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-import sys, time
+import sys, time, re
 import riak
 from settings import settings
+
+_slugify_strip_re = re.compile(r'[^a-zA-Z0-9]')
 
 def populate_bucket(filename, bucket_name=None):
     '''
@@ -23,7 +25,7 @@ def populate_bucket(filename, bucket_name=None):
 
         # First line is the header
         if i == 0:
-            header = [ h.strip().replace(' ', '_') for h in line.split('\t') ]
+            header = [ _slugify_strip_re.sub('', h.replace(' ', '_')).strip().lower() for h in line.split('\t') ]
             continue
 
         values = line.split('\t')
@@ -55,12 +57,17 @@ def _generate_document_data(header, values):
     return document
 
 def _store_data(client, bucket, id, data):
-    new_doc = riak.RiakObject(client, bucket, id)
-    new_doc.set_data(data)
-    new_doc.set_content_type('application/json')
-    new_doc._encode_data = True
+    obj = riak.RiakObject(client, bucket, id)
+    obj.set_data(data)
+    obj.set_content_type('application/json')
+    obj._encode_data = True
+
+    # Set indices
+    for k,v in data.items():
+        obj.add_index('%s_bin' % k, v)
+
     # Try to optimize for write speed
-    new_doc.store(w=0, dw=0, return_body=False)
+    obj.store(w=0, dw=0, return_body=False)
 
 if __name__ == '__main__':
     if len( sys.argv ) < 2:
