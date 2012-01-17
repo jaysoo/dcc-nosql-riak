@@ -30,6 +30,6 @@ if __name__ == '__main__':
         print '\033[0;31mthree arguments required\033[0m'
         sys.exit(1)
 
-    query(sys.argv[1], sys.argv[2], sys.argv[3])
+    query(sys.argv[1], sys.argv[2] + '_bin', sys.argv[3])
 
 
