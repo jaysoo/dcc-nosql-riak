@@ -1,0 +1,7 @@
+import riak
+
+settings = {
+    'TRANSPORT_CLASS': riak.RiakPbcTransport,
+    'HOST': '10.0.3.66',
+    'PORT': 8087,
+}

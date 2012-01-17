@@ -59,7 +59,8 @@ def _store_data(client, bucket, id, data):
     new_doc.set_data(data)
     new_doc.set_content_type('application/json')
     new_doc._encode_data = True
-    new_doc.store()
+    # Try to optimize for write speed
+    new_doc.store(w=0, dw=0, return_body=False)
 
 if __name__ == '__main__':
     if len( sys.argv ) < 2:
