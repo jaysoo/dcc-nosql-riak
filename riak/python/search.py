@@ -35,7 +35,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     try:
-        query(sys.argv[1], sys.argv[2] + '_bin', sys.argv[3], sys.argv[4])
+        query(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
     except IndexError:
-        query(sys.argv[1], sys.argv[2] + '_bin', sys.argv[3])
+        query(sys.argv[1], sys.argv[2], sys.argv[3])
 

@@ -67,6 +67,12 @@ def _store_data(client, bucket, id, data):
     for k,v in data.items():
         obj.add_index('%s_bin' % k, v)
 
+        try:
+            v_int = int(v)
+            obj.add_index('%s_int' % k, v_int)
+        except:
+            pass
+
     # Try to optimize for write speed
     obj.store(w=0, dw=0, return_body=False)
 
