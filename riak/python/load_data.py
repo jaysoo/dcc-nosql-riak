@@ -3,7 +3,7 @@ import sys, time, re
 import riak
 from settings import settings
 
-_slugify_strip_re = re.compile(r'[^a-zA-Z0-9]')
+_slugify_strip_re = re.compile(r'[^a-zA-Z0-9_]')
 
 def populate_bucket(filename, bucket_name=None):
     '''
