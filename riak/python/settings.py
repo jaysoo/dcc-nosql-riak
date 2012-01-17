@@ -1,9 +1,9 @@
 import riak
 
 _default_settings = {
-    'TRANSPORT_CLASS': riak.RiakHttpTransport,
+    'TRANSPORT_CLASS': riak.RiakPbcTransport,
     'HOST': '127.0.0.1',
-    'PORT': 8098,
+    'PORT': 8087,
 }
 
 try:
