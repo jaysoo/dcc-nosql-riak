@@ -10,37 +10,29 @@ def mapreduce():
 
     query = client.add('sample')
 
+    # Find sample types
     query.map('''
-    function(value, keyData, arg) {
+    function(value, key_data, arg) {
         var data = Riak.mapValuesJson(value)[0],
-            count = {},
-            key = data.gender || 'not_specified';
-
-        count[key] = {};
-        count[key][data.sample_id] = 1;
-        return [count];
+        grouped = {};
+        if (data.sample_type) {
+            grouped[data.sample_type] = 1;
+        } else {
+            grouped.unspecified = 1;
+        }
+        return [grouped];
     }
     ''')
 
     # Sort by sample_id
     query.reduce('''
     function(values, arg) {
-        return [ values.reduce(function(acc, item) {
-            for (var gender in item) {
-                if (!item.hasOwnProperty(gender))
-                    continue;
-
-                var samples = item[gender];
-
-                for (var sample in samples) {
-                    if (!samples.hasOwnProperty(sample))
-                        continue;
-
-                    if (gender in acc) 
-                        acc[gender] += item[gender][sample];
-                    else 
-                        acc[gender] = item[gender][sample];
-                }
+        return [values.reduce(function(acc, value) {
+            for (var group in value) {
+                if(group in acc)
+                    acc[group] += value[group];
+                else
+                    acc[group] = value[group];
             }
             return acc;
         }, {})];
@@ -52,16 +44,13 @@ def mapreduce():
     end_time = time.time()
     elapsed_time  = end_time - start_time
 
-    if not results:
-        print '\033[0;34mNo results found\n\033[0m'
-    else:
-        print '\033[0;33mDisplaying count result...\n\033[0m'
-        pp.pprint(results[0])
-        print
+    print '\033[0;33mDisplaying results...\n\033[0m'
+    pp.pprint(results[0])
+    print
 
     print '\033[0;34mQuery time: %0.2f seconds\n\033[0m' % elapsed_time
 
 
 if __name__ == '__main__':
-    print '\033[0;33mFind number of samples grouped by gender\n\033[0m'
+    print '\033[0;33mFind number of samples grouped by sample type\n\033[0m'
     mapreduce()
