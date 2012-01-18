@@ -4,9 +4,7 @@ Requirements
 ------------
 
 * [Riak](http://wiki.basho.com/Installation.html)
-* [Node.js](http://nodejs.org/)
-* [npm](http://npmjs.org/)
-* npm modules: riak-js, seq, undercore
+* Python modules: protobuf (install from scratch), riak
 
 Installation
 ------------
@@ -18,15 +16,7 @@ Use the install_riak.sh script for setting up Riak + Node.js environment.
 Loading data
 ------------
 
-Run the load\_data.js script with the name of the TSV file to load:
+Run the load\_data.py script with the name of the schema file:
 
-    node load_data.js /path/to/file.tsv
-
-
-Searching data
---------------
-
-Run search.js with the name of the bucket and the search term(s).
-
-    node search.js snp "chromosome_strand:1"
+    ./load_data.py /path/to/schema.json
 
