@@ -5,7 +5,7 @@ from settings import settings
 
 _slugify_strip_re = re.compile(r'[^a-zA-Z0-9_]')
 
-def populate_bucket(filename, bucket_name, skip_first, columns):
+def populate_bucket(filename, bucket_name, skip_first, columns, search):
     '''
     Opens a file and loads it into a Riak bucket
 
@@ -17,6 +17,11 @@ def populate_bucket(filename, bucket_name, skip_first, columns):
     client = riak.RiakClient(host=settings['HOST'], port=settings['PORT'], transport_class=settings['TRANSPORT_CLASS'])
     bucket = client.bucket(bucket_name)
     total = 0
+
+    if search:
+        bucket.enable_search()
+    else:
+        bucket.disable_search()
 
     for i,line in enumerate( open(filename) ):
 
@@ -34,9 +39,8 @@ def populate_bucket(filename, bucket_name, skip_first, columns):
         total = i + 1
 
     print '\033[0;33m... Loaded %s documents\n\033[0m' % total
-    
 
-    return total
+    return bucket, total
 
 def _generate_bucket_name(filename):
     ''' 
@@ -72,7 +76,8 @@ if __name__ == '__main__':
     start_time = time.time()
 
     for s in schema:
-        total += populate_bucket(s['file'], s['bucket'], s['skip_first'], s['columns'])
+        bucket, n = populate_bucket(s['file'], s['bucket'], s.get('skip_first', True), s['columns'], s.get('search', False))
+        total += n
 
     end_time = time.time()
 
