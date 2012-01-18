@@ -13,12 +13,12 @@ def mapreduce():
     query.map('''
     function(value, keyData, arg) {
         var data = Riak.mapValuesJson(value)[0],
-            count = {};
-        if (data.gender)
-            count[ data.gender ] = 1;
-        else
-            count.unspecified = 1;
-        return [ count ];
+            count = {},
+            key = data.gender || 'not_specified';
+
+        count[key] = {};
+        count[key][data.sample_id] = 1;
+        return [count];
     }
     ''')
 
@@ -27,10 +27,20 @@ def mapreduce():
     function(values, arg) {
         return [ values.reduce(function(acc, item) {
             for (var gender in item) {
-                if (gender in acc) 
-                    acc[gender] += item[gender];
-                else 
-                    acc[gender] = item[gender];
+                if (!item.hasOwnProperty(gender))
+                    continue;
+
+                var samples = item[gender];
+
+                for (var sample in samples) {
+                    if (!samples.hasOwnProperty(sample))
+                        continue;
+
+                    if (gender in acc) 
+                        acc[gender] += item[gender][sample];
+                    else 
+                        acc[gender] = item[gender][sample];
+                }
             }
             return acc;
         }, {})];
@@ -53,4 +63,5 @@ def mapreduce():
 
 
 if __name__ == '__main__':
+    print '\033[0;33mFind number of samples grouped by gender\n\033[0m'
     mapreduce()
