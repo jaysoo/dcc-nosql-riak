@@ -5,7 +5,7 @@ from settings import settings
 
 _slugify_strip_re = re.compile(r'[^a-zA-Z0-9_]')
 
-def populate_bucket(filename, bucket_name, skip_first, header):
+def populate_bucket(filename, bucket_name, skip_first, columns):
     '''
     Opens a file and loads it into a Riak bucket
 
@@ -26,9 +26,10 @@ def populate_bucket(filename, bucket_name, skip_first, header):
 
         # Replace all \N values with None
         values = [ None if v == '\\N' else v for v in line.split('\t') ]
-        data = dict( zip([ str(h['name']) for h in header ], values) )
+        data = dict( zip([ str(c['name']) for c in columns ], values) )
+        indexed_columns = [ c['name'] for c in columns if c.get('index', False) ]
 
-        _store_data(client, bucket, str(i), data)
+        _store_data(client, bucket, str(i), data, indexed_columns)
 
         total = i + 1
 
@@ -43,15 +44,15 @@ def _generate_bucket_name(filename):
     '''
     return filename.split('/')[-1].split('.')[0]
 
-def _store_data(client, bucket, id, data):
+def _store_data(client, bucket, id, data, indexed_columns):
     obj = riak.RiakObject(client, bucket, id)
     obj.set_data(data)
     obj.set_content_type('application/json')
     obj._encode_data = True
 
     # Set indexes
-    for k,v in data.items():
-        obj.add_index('%s_bin' % k, v)
+    for k in [ k for k in data.items() if k in indexed_columns ]:
+        obj.add_index('%s_bin' % k, data[k])
 
     # Try to optimize for write speed
     obj.store(w=0, dw=0, return_body=False)
