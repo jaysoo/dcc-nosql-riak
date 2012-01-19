@@ -59,7 +59,7 @@ def _store_data(client, bucket, id, data, indexed_columns):
         obj.add_index('%s_bin' % k, data[k])
 
     # Try to optimize for write speed
-    obj.store(w=0, dw=0, return_body=False)
+    obj.store(w=1, dw=1, return_body=False)
 
 if __name__ == '__main__':
     if len( sys.argv ) < 2:
