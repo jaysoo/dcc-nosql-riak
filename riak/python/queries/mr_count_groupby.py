@@ -8,7 +8,7 @@ def mapreduce():
     pp = pprint.PrettyPrinter(depth=2, indent=4)
     start_time = time.time()
 
-    query = client.add('sample')
+    query = client.index('sample', '$key')
 
     # Find sample types
     query.map('''

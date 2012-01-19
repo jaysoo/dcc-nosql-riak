@@ -3,6 +3,7 @@
     "file": "/home/ubuntu/data/sample_oicrPanc.txt",
     "bucket": "sample",
     "skip_first": true,
+	"pk": "sample_id",
 	"search": true,
     "columns": [
       { "name": "cancer_type" },
@@ -39,6 +40,7 @@
     "file": "/home/ubuntu/data/snp_oicrPanc.txt",
     "bucket": "snp",
     "skip_first": true,
+	"pk": "tumour_sample_id",
 	"search": true,
     "columns": [
       { "name": "cancer_type" },
