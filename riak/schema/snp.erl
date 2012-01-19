@@ -18,13 +18,13 @@
         {field, [
             {name, "sample_type"},
             {type, string},
-            {analyzer_factory, {erlang, text_analyzers, standard_analyzer_factory}}
+            {analyzer_factory, {erlang, text_analyzers, noop_analyzer_factory}}
         ]},
 
         {field, [
             {name, "mutation_type"},
             {type, string},
-            {analyzer_factory, {erlang, text_analyzers, standard_analyzer_factory}}
+            {analyzer_factory, {erlang, text_analyzers, noop_analyzer_factory}}
         ]},
 
         {field, [

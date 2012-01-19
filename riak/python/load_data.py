@@ -34,7 +34,7 @@ def populate_bucket(filename, bucket_name, pk, skip_first, columns, search):
         data = dict( zip([ str(c['name']) for c in columns ], values) )
         indexed_columns = [ c['name'] for c in columns if c.get('index', False) ]
 
-        _store_data(client, bucket, data[pk], data, indexed_columns)
+        _store_data(client, bucket, data[pk] if pk else str(i), data, indexed_columns)
 
         total = i + 1
 
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     start_time = time.time()
 
     for s in schema:
-        bucket, n = populate_bucket(s['file'], s['bucket'], s['pk'], s.get('skip_first', True), s['columns'], s.get('search', False))
+        bucket, n = populate_bucket(s['file'], s['bucket'], s.get('pk'), s.get('skip_first', True), s['columns'], s.get('search', False))
         total += n
 
     end_time = time.time()
