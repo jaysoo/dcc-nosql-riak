@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import pprint, time
 import riak
-from ..settings import settings
+from settings import settings
 
 def mapreduce():
     client = riak.RiakClient(host=settings['HOST'], port=settings['PORT'], transport_class=settings['TRANSPORT_CLASS'])
     pp = pprint.PrettyPrinter(depth=2, indent=4)
     start_time = time.time()
 
-    query = client.index('sample', '$key')
+    query = client.add('sample')
 
     # Find sample types
     query.map('''
